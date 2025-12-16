@@ -1,2 +1,2 @@
 # LineFollower
-LineFollower is a robot which follows line. 
+Projekt przedstawia autonomicznego robota typu Line Follower, zbudowanego w oparciu o mikrokontroler STM32 NUCLEO-L476RG. Głównym celem konstrukcji jest szybkie i precyzyjne śledzenie czarnej linii na białym tle. Robot wykorzystuje listwę czujników odbiciowych do analizy położenia trasy, a zebrane dane są przetwarzane w czasie rzeczywistym przez zaimplementowany regulator P. Algorytm ten dostosowuje prędkość silników DC, co pozwala na dynamiczne i stabilne pokonywanie zakrętów. Całość zasilana jest za pomocą dwóch ogniw Li-Ion, a oprogramowanie zostało przygotowane w środowisku STM32CubeIDE.  
