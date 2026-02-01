@@ -83,7 +83,7 @@ int32_t u = 0;
 
 float Kp = 15.0f;
 float Ki = 0.1f;
-float Kd = 1.0f;
+float Kd = 10.0f;
 /* USER CODE END 0 */
 
 /**
