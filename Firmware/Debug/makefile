@@ -46,8 +46,8 @@ LineFollower.bin \
 all: LineFollower.elf secondary-outputs
 
 # Tool invocations
-LineFollower.elf: $(OBJS) $(USER_OBJS) C:\Users\matii\STM32CubeIDE\workspace_1.4.0\LineFollower\STM32L476RGTX_FLASH.ld
-	arm-none-eabi-gcc -o "LineFollower.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\matii\STM32CubeIDE\workspace_1.4.0\LineFollower\STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="LineFollower.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+LineFollower.elf: $(OBJS) $(USER_OBJS) /home/mduda/STM32CubeIDE/workspace_1.4.0/LineFollower/STM32L476RGTX_FLASH.ld
+	arm-none-eabi-gcc -o "LineFollower.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/mduda/STM32CubeIDE/workspace_1.4.0/LineFollower/STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="LineFollower.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "pid.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,22 +49,8 @@ TIM_HandleTypeDef htim6;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-uint16_t adc_results[8];
-int ADC_flag;
-char msg[256];
 
-const int weights[8] = {40, 30, 20, 10, -10, -20, -30, -40};
-
-float position_error = 0.0f;
-int32_t numerator = 0;
-int32_t denominator = 0;
-
-float Kp = 5.0f;
-int base_speed = 500;
-int max_speed = 799;
-
-int left_motor_pwm = 0;
-int right_motor_pwm = 0;
+/* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -76,11 +62,28 @@ static void MX_TIM3_Init(void);
 static void MX_TIM6_Init(void);
 /* USER CODE BEGIN PFP */
 
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+uint16_t adc_results[8];
+int ADC_flag;
 
+cpid_t pid;
+
+const int weights[8] = {40 , 30, 20, 10, -10, -20, -30, -40};
+
+int base_speed = 500;
+int max_speed = 799;
+
+int32_t motor_l = 0;
+int32_t motor_r = 0;
+int32_t u = 0;
+
+float Kp = 15.0f;
+float Ki = 0.1f;
+float Kd = 1.0f;
 /* USER CODE END 0 */
 
 /**
@@ -128,8 +131,8 @@ int main(void)
   // 3. Ustawienie kierunku silników
   HAL_GPIO_WritePin(A_IN1_GPIO_Port, A_IN1_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(A_IN2_GPIO_Port, A_IN2_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(B_IN1_GPIO_Port, B_IN1_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(B_IN2_GPIO_Port, B_IN2_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(B_IN1_GPIO_Port, B_IN1_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(B_IN2_GPIO_Port, B_IN2_Pin, GPIO_PIN_RESET);
 
   // 4. Włączenie silników
   HAL_GPIO_WritePin(MD_STBY_GPIO_Port, MD_STBY_Pin, GPIO_PIN_SET);
@@ -150,67 +153,83 @@ int main(void)
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
   HAL_Delay(1000);
 
+  pid_init(&pid, Kp, Ki, Kd, 10, 1);
+
+  pid.total_max = pid_scale(&pid, 500.0f);
+  pid.total_min = pid_scale(&pid, -500.0f);
+
   HAL_TIM_Base_Start(&htim6);
-
-
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  // A - lewy
+  // B - prawy
+  // 1 - tył
+  // 2 - przód
+
   while (1)
-  {
-	if (ADC_flag == 1) {
-		ADC_flag = 0;
+    {
+	  ADC_flag = 1;
+      if (ADC_flag == 1)
+      {
+        ADC_flag = 0;
 
-		numerator = 0;
-		denominator = 0;
+        int32_t numerator = 0;
+        int32_t denominator = 0;
 
-		for (int i = 0; i < 8; i++) {
-			int val = adc_results[i];
+        for (int i = 0; i < 8; i++)
+        {
+          if (adc_results[i] > 500)
+          {
+            numerator += weights[i];
+            denominator++;
+          }
+        }
 
-			if (val < 500) val = 0;
-			numerator += val * weights[i];
-		    denominator += val;
-		}
+        if (denominator == 8) {
+        	motor_l = 0;
+        	motor_r = 0;
+        }
+        else if (denominator > 0)
+        {
+          int32_t error = numerator / denominator;
 
-		if (denominator > 100) {
-			position_error = (float)numerator / (float)denominator;
-		}
+          u = pid_calc(&pid, error, 0);
 
-		int correction = (int)(position_error *Kp);
+          motor_l = base_speed - u;
+          motor_r = base_speed + u;
+        }
+        else
+        {
+          if (pid.e_last > 0)
+          {
+            motor_l = 0;
+            motor_r = max_speed;
+          }
+          else if (pid.e_last < 0)
+          {
+            motor_l = max_speed;
+            motor_r = 0;
+          }
+        }
 
-		int right_target = base_speed - correction;
-		int left_target = base_speed + correction;
+        if (motor_l > max_speed) motor_l = max_speed;
+        if (motor_l < 0)         motor_l = 0;
+        if (motor_r > max_speed) motor_r = max_speed;
+        if (motor_r < 0)         motor_r = 0;
 
-
-		if (left_target > max_speed) left_motor_pwm = max_speed;
-		else if (left_target < 0)    left_motor_pwm = 0;
-		else                         left_motor_pwm = left_target;
-
-		if (right_target > max_speed) right_motor_pwm = max_speed;
-		else if (right_target < 0)    right_motor_pwm = 0;
-		else                          right_motor_pwm = right_target;
-
-		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, right_motor_pwm);
-		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, left_motor_pwm);
-	}
+        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, (uint16_t)motor_r);
+        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, (uint16_t)motor_l);
+      }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	/*
-	if (ADC_flag == 1) {
-		ADC_flag = 0;
-		sprintf(msg, "S1:%4d | S2:%4d | S3:%4d | S4:%4d | S5:%4d | S6:%4d | S9:%4d | S15:%4d\r\n",
-				adc_results[0], adc_results[1], adc_results[2], adc_results[3],
-				adc_results[4], adc_results[5], adc_results[6], adc_results[7]);
-		printf("%s", msg);
-	  }
-	  */
-  }
   /* USER CODE END 3 */
+    }
 }
-
 /**
   * @brief System Clock Configuration
   * @retval None
