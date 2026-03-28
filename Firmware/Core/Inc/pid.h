@@ -1,11 +1,3 @@
-
-/*
- * pid.h
- *
- * Created on: 09.03.2018
- * Author: Wojciech Domski
-*/
-
 #ifndef PID_H_
 #define PID_H_
 
