@@ -35,11 +35,10 @@ The project also includes electrical schematic development for power distributio
 
 - `Firmware/` - STM32 project files, startup code, HAL configuration, and PID implementation
 - `Mechanics/` - 3D CAD models and assembly files
-- `Hardware/` - hardware-related resources
+- `Hardware/` - schematic
 
 ## Demo Video
-
-[![Watch the demo](https://github.com/user-attachments/assets/b427ec32-a8ac-44fe-875d-f9b29716606c)](https://youtube.com/shorts/kqhGqm2l2KI?feature=share)
+Demo: https://youtube.com/shorts/kqhGqm2l2KI?feature=share
 
 ## Photos
 
